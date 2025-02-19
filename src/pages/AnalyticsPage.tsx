@@ -3,7 +3,6 @@ import {
   BarChart3,
   TrendingUp,
   DollarSign,
-  PieChart,
   Download,
   Calendar,
   ArrowUpRight,
@@ -11,7 +10,9 @@ import {
   Target,
   Activity,
   Users,
-  Clock
+  Clock,
+  Info,
+  PieChart as PieChartIcon
 } from 'lucide-react';
 import {
   AreaChart,
@@ -26,17 +27,21 @@ import {
   Line,
   CartesianGrid,
   Legend,
+  PieChart,
+  Pie,
+  Cell,
+  Sector,
   RadarChart,
   PolarGrid,
   PolarAngleAxis,
   PolarRadiusAxis,
-  Radar,
-  Pie,
-  Cell
+  Radar
 } from 'recharts';
 import { analyticsData } from '../data/analytics';
 import { projects } from '../data/projects';
 import { employees } from '../data/employees';
+import { expenses } from '../data/expenses';
+import { sales } from '../data/sales';
 
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('en-US', {
@@ -51,15 +56,155 @@ const formatPercent = (value: number) => {
   return `${value.toFixed(1)}%`;
 };
 
+const revenueData = [
+  { 
+    name: 'Product Sales', 
+    value: 45, 
+    color: '#22c55e',
+    description: 'Direct product revenue from woodworking items',
+    trend: '+12.5%',
+    amount: 450000
+  },
+  { 
+    name: 'Services', 
+    value: 25, 
+    color: '#f59e0b',
+    description: 'Installation and customization services',
+    trend: '+8.3%',
+    amount: 250000
+  },
+  { 
+    name: 'Consulting', 
+    value: 15, 
+    color: '#3b82f6',
+    description: 'Design consultation and planning',
+    trend: '+15.2%',
+    amount: 150000
+  },
+  { 
+    name: 'Maintenance', 
+    value: 15, 
+    color: '#8b5cf6',
+    description: 'Ongoing maintenance contracts',
+    trend: '+5.7%',
+    amount: 150000
+  }
+];
+
+const expenseData = [
+  { 
+    name: 'Materials', 
+    value: 30, 
+    color: '#22c55e',
+    description: 'Raw materials and supplies',
+    trend: '+5.2%',
+    amount: 300000
+  },
+  { 
+    name: 'Labor', 
+    value: 35, 
+    color: '#f59e0b',
+    description: 'Employee salaries and benefits',
+    trend: '+7.8%',
+    amount: 350000
+  },
+  { 
+    name: 'Operations', 
+    value: 20, 
+    color: '#3b82f6',
+    description: 'Facility and equipment costs',
+    trend: '+3.1%',
+    amount: 200000
+  },
+  { 
+    name: 'Marketing', 
+    value: 15, 
+    color: '#8b5cf6',
+    description: 'Advertising and promotion',
+    trend: '+9.4%',
+    amount: 150000
+  }
+];
+
+const renderActiveShape = (props: any) => {
+  const {
+    cx,
+    cy,
+    innerRadius,
+    outerRadius,
+    startAngle,
+    endAngle,
+    fill,
+    payload,
+    value,
+    name
+  } = props;
+
+  return (
+    <g>
+      <text x={cx} y={cy - 10} dy={8} textAnchor="middle" fill={fill} className="text-lg font-bold">
+        {name}
+      </text>
+      <text x={cx} y={cy + 10} dy={8} textAnchor="middle" fill={fill} className="text-lg font-bold">
+        {`${value}%`}
+      </text>
+      <Sector
+        cx={cx}
+        cy={cy}
+        innerRadius={innerRadius}
+        outerRadius={outerRadius + 8}
+        startAngle={startAngle}
+        endAngle={endAngle}
+        fill={fill}
+      />
+      <Sector
+        cx={cx}
+        cy={cy}
+        startAngle={startAngle}
+        endAngle={endAngle}
+        innerRadius={outerRadius + 8}
+        outerRadius={outerRadius + 12}
+        fill={fill}
+      />
+    </g>
+  );
+};
+
+const CustomTooltip = ({ active, payload }: any) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    return (
+      <div className="bg-white p-4 shadow-lg rounded-lg border">
+        <h3 className="font-bold text-gray-900">{data.name}</h3>
+        <p className="text-sm text-gray-600 mt-1">{data.description}</p>
+        <div className="grid grid-cols-2 gap-4 mt-2">
+          <div>
+            <p className="text-sm text-gray-600">Amount</p>
+            <p className="font-bold text-gray-900">{formatCurrency(data.amount)}</p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-600">Trend</p>
+            <p className={`font-bold ${data.trend.startsWith('+') ? 'text-green-600' : 'text-red-600'}`}>
+              {data.trend}
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  return null;
+};
+
 export function AnalyticsPage() {
   const [timeRange, setTimeRange] = useState<'week' | 'month' | 'year'>('month');
+  const [activeRevenue, setActiveRevenue] = useState<number | undefined>();
+  const [activeExpense, setActiveExpense] = useState<number | undefined>();
   const [selectedMetric, setSelectedMetric] = useState<string | null>(null);
-  const [showDetails, setShowDetails] = useState(false);
 
   const profitMargin = (analyticsData.profit / analyticsData.revenue) * 100;
   const revenueGrowth = ((analyticsData.monthlyTrends[2].revenue - analyticsData.monthlyTrends[1].revenue) / analyticsData.monthlyTrends[1].revenue) * 100;
   const projectEfficiency = (projects.filter(p => p.status === 'completed').length / projects.length) * 100;
-  const employeeUtilization = (employees.reduce((sum, emp) => sum + (emp.availability?.utilization || 0), 0) / employees.length);
+  const employeeUtilization = employees.reduce((sum, emp) => sum + (emp.projectIds.length > 0 ? 1 : 0), 0) / employees.length * 100;
 
   const getMetricDetails = (metric: string) => {
     switch (metric) {
@@ -85,22 +230,6 @@ export function AnalyticsPage() {
       default:
         return null;
     }
-  };
-
-  const CustomTooltip = ({ active, payload, label }: any) => {
-    if (!active || !payload) return null;
-    
-    return (
-      <div className="bg-white p-4 shadow-lg rounded-lg border">
-        <p className="font-medium mb-2">{label}</p>
-        {payload.map((entry: any, index: number) => (
-          <p key={index} style={{ color: entry.color }} className="flex items-center gap-2">
-            <span className="w-3 h-3 rounded-full" style={{ backgroundColor: entry.color }}></span>
-            <span>{entry.name}: {entry.name.includes('Margin') ? formatPercent(entry.value) : formatCurrency(entry.value)}</span>
-          </p>
-        ))}
-      </div>
-    );
   };
 
   const DrillDownModal = () => {
@@ -162,6 +291,7 @@ export function AnalyticsPage() {
 
   return (
     <div className="space-y-6">
+      {/* Header Section */}
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-gray-800">Business Analytics</h1>
         <div className="flex gap-4">
@@ -198,6 +328,7 @@ export function AnalyticsPage() {
         </div>
       </div>
 
+      {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div 
           className="bg-white rounded-lg shadow p-6 cursor-pointer hover:shadow-lg transition-shadow"
@@ -267,6 +398,158 @@ export function AnalyticsPage() {
         </div>
       </div>
 
+      {/* Pie Charts Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Revenue Distribution */}
+        <div className="bg-white rounded-lg shadow p-6">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg font-semibold">Revenue Distribution</h2>
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <Info size={16} />
+              <span>Hover for details</span>
+            </div>
+          </div>
+          <div className="grid grid-cols-5 gap-6">
+            <div className="col-span-3">
+              <div className="h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      activeIndex={activeRevenue}
+                      activeShape={renderActiveShape}
+                      data={revenueData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={100}
+                      fill="#8884d8"
+                      dataKey="value"
+                      onMouseEnter={(_, index) => setActiveRevenue(index)}
+                      onMouseLeave={() => setActiveRevenue(undefined)}
+                    >
+                      {revenueData.map((entry, index) => (
+                        <Cell 
+                          key={`cell-${index}`} 
+                          fill={entry.color}
+                          className="transition-all duration-300 hover:opacity-80"
+                        />
+                      ))}
+                    </Pie>
+                    <Tooltip content={<CustomTooltip />} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+            <div className="col-span-2 flex flex-col justify-center space-y-4">
+              {revenueData.map((item, index) => (
+                <div 
+                  key={index} 
+                  className={`bg-gray-50 p-4 rounded-lg transition-all duration-300 ${
+                    activeRevenue === index ? 'ring-2 ring-offset-2' : ''
+                  }`}
+                  style={{ 
+                    ringColor: item.color,
+                    transform: activeRevenue === index ? 'scale(1.05)' : 'scale(1)'
+                  }}
+                  onMouseEnter={() => setActiveRevenue(index)}
+                  onMouseLeave={() => setActiveRevenue(undefined)}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div 
+                        className="w-3 h-3 rounded-full" 
+                        style={{ backgroundColor: item.color }}
+                      />
+                      <p className="font-medium">{item.name}</p>
+                    </div>
+                    <p className="text-sm text-green-600">{item.trend}</p>
+                  </div>
+                  <div className="mt-2 flex justify-between items-baseline">
+                    <p className="text-2xl font-bold">{item.value}%</p>
+                    <p className="text-sm text-gray-600">{formatCurrency(item.amount)}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Expense Distribution */}
+        <div className="bg-white rounded-lg shadow p-6">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg font-semibold">Expense Distribution</h2>
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <Info size={16} />
+              <span>Hover for details</span>
+            </div>
+          </div>
+          <div className="grid grid-cols-5 gap-6">
+            <div className="col-span-3">
+              <div className="h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      activeIndex={activeExpense}
+                      activeShape={renderActiveShape}
+                      data={expenseData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={100}
+                      fill="#8884d8"
+                      dataKey="value"
+                      onMouseEnter={(_, index) => setActiveExpense(index)}
+                      onMouseLeave={() => setActiveExpense(undefined)}
+                    >
+                      {expenseData.map((entry, index) => (
+                        <Cell 
+                          key={`cell-${index}`} 
+                          fill={entry.color}
+                          className="transition-all duration-300 hover:opacity-80"
+                        />
+                      ))}
+                    </Pie>
+                    <Tooltip content={<CustomTooltip />} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+            <div className="col-span-2 flex flex-col justify-center space-y-4">
+              {expenseData.map((item, index) => (
+                <div 
+                  key={index} 
+                  className={`bg-gray-50 p-4 rounded-lg transition-all duration-300 ${
+                    activeExpense === index ? 'ring-2 ring-offset-2' : ''
+                  }`}
+                  style={{ 
+                    ringColor: item.color,
+                    transform: activeExpense === index ? 'scale(1.05)' : 'scale(1)'
+                  }}
+                  onMouseEnter={() => setActiveExpense(index)}
+                  onMouseLeave={() => setActiveExpense(undefined)}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div 
+                        className="w-3 h-3 rounded-full" 
+                        style={{ backgroundColor: item.color }}
+                      />
+                      <p className="font-medium">{item.name}</p>
+                    </div>
+                    <p className="text-sm text-red-600">{item.trend}</p>
+                  </div>
+                  <div className="mt-2 flex justify-between items-baseline">
+                    <p className="text-2xl font-bold">{item.value}%</p>
+                    <p className="text-sm text-gray-600">{formatCurrency(item.amount)}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Additional Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white rounded-lg shadow p-6">
           <h2 className="text-lg font-semibold mb-4">Revenue vs Expenses</h2>
@@ -326,6 +609,7 @@ export function AnalyticsPage() {
         </div>
       </div>
 
+      {/* Financial Forecasts and Performance Metrics */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white rounded-lg shadow p-6">
           <h2 className="text-lg font-semibold mb-4">Financial Forecasts</h2>
@@ -409,6 +693,7 @@ export function AnalyticsPage() {
         </div>
       </div>
 
+      {/* Financial Summary Table */}
       <div className="bg-white rounded-lg shadow p-6">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-lg font-semibold">Financial Summary</h2>
