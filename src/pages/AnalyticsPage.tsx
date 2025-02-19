@@ -1,20 +1,5 @@
 import React, { useState } from 'react';
 import {
-  BarChart3,
-  TrendingUp,
-  DollarSign,
-  Download,
-  Calendar,
-  ArrowUpRight,
-  ArrowDownRight,
-  Target,
-  Activity,
-  Users,
-  Clock,
-  Info,
-  PieChart as PieChartIcon
-} from 'lucide-react';
-import {
   AreaChart,
   Area,
   XAxis,
@@ -37,6 +22,21 @@ import {
   PolarRadiusAxis,
   Radar
 } from 'recharts';
+import {
+  BarChart3,
+  TrendingUp,
+  DollarSign,
+  Download,
+  Calendar,
+  ArrowUpRight,
+  ArrowDownRight,
+  Target,
+  Activity,
+  Users,
+  Clock,
+  Info,
+  PieChart as PieChartIcon
+} from 'lucide-react';
 import { analyticsData } from '../data/analytics';
 import { projects } from '../data/projects';
 import { employees } from '../data/employees';
@@ -176,18 +176,22 @@ const CustomTooltip = ({ active, payload }: any) => {
     return (
       <div className="bg-white p-4 shadow-lg rounded-lg border">
         <h3 className="font-bold text-gray-900">{data.name}</h3>
-        <p className="text-sm text-gray-600 mt-1">{data.description}</p>
+        {data.description && (
+          <p className="text-sm text-gray-600 mt-1">{data.description}</p>
+        )}
         <div className="grid grid-cols-2 gap-4 mt-2">
           <div>
             <p className="text-sm text-gray-600">Amount</p>
-            <p className="font-bold text-gray-900">{formatCurrency(data.amount)}</p>
+            <p className="font-bold text-gray-900">{formatCurrency(data.amount || data.value)}</p>
           </div>
-          <div>
-            <p className="text-sm text-gray-600">Trend</p>
-            <p className={`font-bold ${data.trend.startsWith('+') ? 'text-green-600' : 'text-red-600'}`}>
-              {data.trend}
-            </p>
-          </div>
+          {data.trend && (
+            <div>
+              <p className="text-sm text-gray-600">Trend</p>
+              <p className={`font-bold ${data.trend.startsWith('+') ? 'text-green-600' : 'text-red-600'}`}>
+                {data.trend}
+              </p>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -738,7 +742,7 @@ export function AnalyticsPage() {
               <tr className="border-b">
                 <td className="py-3">Labor Costs</td>
                 <td className="py-3 text-right">{formatCurrency(120000)}</td>
-                <td className="py-3 text-right">{formatCurrency(115000)}</td>
+                <td className="py-3 text-right">{formatCurrency(115000)} </td>
                 <td className="py-3 text-right">{formatCurrency(580000)}</td>
                 <td className="py-3 text-right text-red-600">+{formatPercent(4.3)}</td>
               </tr>
