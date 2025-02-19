@@ -7,7 +7,7 @@ import {
   Globe,
   Palette,
   Mail,
-  Building,
+  Building, // Replaced Bank with Building
   CreditCard,
   Lock,
   Save,
@@ -19,11 +19,24 @@ import {
   Laptop,
   Smartphone,
   X,
-  Plus
+  Plus,
+  Link,
+  RefreshCw,
+  ChevronRight
 } from 'lucide-react';
 
+interface LinkedAccount {
+  id: string;
+  bankName: string;
+  accountType: 'checking' | 'savings' | 'credit';
+  accountNumber: string;
+  lastSync: string;
+  balance: number;
+  status: 'active' | 'error' | 'pending';
+}
+
 export function SettingsPage() {
-  const [activeTab, setActiveTab] = useState<'general' | 'appearance' | 'notifications' | 'security' | 'billing'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'appearance' | 'notifications' | 'security' | 'billing' | 'accounts'>('general');
   const [theme, setTheme] = useState('light');
   const [language, setLanguage] = useState('en');
   const [timezone, setTimezone] = useState('UTC');
@@ -42,10 +55,63 @@ export function SettingsPage() {
     phone: '(555) 123-4567',
     email: 'contact@craftmanager.pro'
   });
+  const [showLinkAccount, setShowLinkAccount] = useState(false);
+  const [selectedBank, setSelectedBank] = useState('');
+  const [linkedAccounts, setLinkedAccounts] = useState<LinkedAccount[]>([
+    {
+      id: '1',
+      bankName: 'Chase Bank',
+      accountType: 'checking',
+      accountNumber: '****4567',
+      lastSync: '2024-03-15 14:30',
+      balance: 15420.50,
+      status: 'active'
+    },
+    {
+      id: '2',
+      bankName: 'Bank of America',
+      accountType: 'credit',
+      accountNumber: '****8901',
+      lastSync: '2024-03-15 14:30',
+      balance: 2340.75,
+      status: 'error'
+    }
+  ]);
+
+  const banks = [
+    { id: 'chase', name: 'Chase Bank' },
+    { id: 'bofa', name: 'Bank of America' },
+    { id: 'wells', name: 'Wells Fargo' },
+    { id: 'citi', name: 'Citibank' },
+    { id: 'capital_one', name: 'Capital One' }
+  ];
 
   const handleSaveSettings = () => {
-    // Handle saving settings
     alert('Settings saved successfully!');
+  };
+
+  const handleLinkAccount = (e: React.FormEvent) => {
+    e.preventDefault();
+    // In a real app, this would handle the bank authentication flow
+    setShowLinkAccount(false);
+    setSelectedBank('');
+  };
+
+  const handleRemoveAccount = (accountId: string) => {
+    if (confirm('Are you sure you want to remove this account?')) {
+      setLinkedAccounts(accounts => accounts.filter(acc => acc.id !== accountId));
+    }
+  };
+
+  const handleSyncAccount = (accountId: string) => {
+    // In a real app, this would trigger a sync with the bank's API
+    setLinkedAccounts(accounts =>
+      accounts.map(acc =>
+        acc.id === accountId
+          ? { ...acc, lastSync: new Date().toLocaleString() }
+          : acc
+      )
+    );
   };
 
   return (
@@ -110,6 +176,15 @@ export function SettingsPage() {
               >
                 <CreditCard size={20} />
                 Billing
+              </button>
+              <button
+                onClick={() => setActiveTab('accounts')}
+                className={`w-full flex items-center gap-2 px-4 py-2 rounded-lg ${
+                  activeTab === 'accounts' ? 'bg-amber-50 text-amber-700' : 'hover:bg-gray-50'
+                }`}
+              >
+                <Building size={20} /> {/* Changed to Building icon */}
+                Linked Accounts
               </button>
             </nav>
           </div>
@@ -344,7 +419,7 @@ export function SettingsPage() {
                   <div>
                     <p className="font-medium">System Alerts</p>
                     <p className="text-sm text-gray-600">Receive system maintenance and update notifications</p>
-                  </div>
+                    </div>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input
                       type="checkbox"
@@ -530,6 +605,188 @@ export function SettingsPage() {
                     </div>
                   </div>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'accounts' && (
+            <div className="space-y-6">
+              {/* Account Linking Section */}
+              <div className="bg-white rounded-lg shadow-md p-6">
+                <div className="flex justify-between items-center mb-6">
+                  <div>
+                    <h2 className="text-lg font-semibold">Linked Accounts</h2>
+                    <p className="text-gray-600">Manage your connected bank accounts for automatic transaction tracking</p>
+                  </div>
+                  <button
+                    onClick={() => setShowLinkAccount(true)}
+                    className="flex items-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700"
+                  >
+                    <Plus size={20} />
+                    Link New Account
+                  </button>
+                </div>
+
+                {/* Linked Accounts List */}
+                <div className="space-y-4">
+                  {linkedAccounts.map(account => (
+                    <div
+                      key={account.id}
+                      className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="p-2 bg-white rounded-lg">
+                          <Building className="w-6 h-6 text-amber-600" /> {/* Changed to Building icon */}
+                        </div>
+                        <div>
+                          <h3 className="font-medium">{account.bankName}</h3>
+                          <p className="text-sm text-gray-600">
+                            {account.accountType.charAt(0).toUpperCase() + account.accountType.slice(1)} •••• {account.accountNumber.slice(-4)}
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            Last synced: {account.lastSync}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <div className="text-right">
+                          <p className="font-medium">${account.balance.toLocaleString()}</p>
+                          <span className={`text-sm ${
+                            account.status === 'active' ? 'text-green-600' :
+                            account.status === 'error' ? 'text-red-600' :
+                            'text-yellow-600'
+                          }`}>
+                            {account.status.charAt(0).toUpperCase() + account.status.slice(1)}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleSyncAccount(account.id)}
+                            className="p-2 text-gray-600 hover:text-amber-600 rounded-lg hover:bg-gray-100"
+                            title="Sync Account"
+                          >
+                            <RefreshCw size={20} />
+                          </button>
+                          <button
+                            onClick={() => handleRemoveAccount(account.id)}
+                            className="p-2 text-gray-600 hover:text-red-600 rounded-lg hover:bg-gray-100"
+                            title="Remove Account"
+                          >
+                            <X size={20} />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+
+                  {linkedAccounts.length === 0 && (
+                    <div className="text-center py-8">
+                      <Building className="mx-auto h-12 w-12 text-gray-400" /> {/* Changed to Building icon */}
+                      <h3 className="mt-2 text-sm font-medium text-gray-900">No linked accounts</h3>
+                      <p className="mt-1 text-sm text-gray-500">
+                        Get started by linking your first bank account.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Account Security Notice */}
+              <div className="bg-blue-50 rounded-lg p-6">
+                <div className="flex items-start gap-3">
+                  <Shield className="text-blue-500 mt-1" size={24} />
+                  <div>
+                    <h3 className="font-medium text-blue-800">Secure Account Linking</h3>
+                    <p className="mt-1 text-sm text-blue-600">
+                      We use bank-level security measures to protect your financial information. Your credentials are never stored and all data is encrypted.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Recent Activity */}
+              <div className="bg-white rounded-lg shadow-md p-6">
+                <h3 className="font-medium text-gray-900 mb-4">Recent Sync Activity</h3>
+                <div className="space-y-4">
+                  {linkedAccounts.map(account => (
+                    <div key={account.id} className="flex items-center justify-between py-2">
+                      <div className="flex items-center gap-3">
+                        <RefreshCw className="text-gray-400" size={16} />
+                        <div>
+                          <p className="text-sm font-medium">{account.bankName}</p>
+                          <p className="text-xs text-gray-500">Last sync: {account.lastSync}</p>
+                        </div>
+                      </div>
+                      <span className={`px-2 py-1 text-xs rounded-full ${
+                        account.status === 'active' ? 'bg-green-100 text-green-800' :
+                        account.status === 'error' ? 'bg-red-100 text-red-800' :
+                        'bg-yellow-100 text-yellow-800'
+                      }`}>
+                        {account.status}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Link Account Modal */}
+          {showLinkAccount && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-xl font-semibold">Link New Account</h2>
+                  <button
+                    onClick={() => setShowLinkAccount(false)}
+                    className="text-gray-500 hover:text-gray-700"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+
+                <form onSubmit={handleLinkAccount} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Select Bank</label>
+                    <select
+                      className="mt-1 block w-full px-3 py-2 border rounded-lg"
+                      value={selectedBank}
+                      onChange={(e) => setSelectedBank(e.target.value)}
+                      required
+                    >
+                      <option value="">Choose a bank...</option>
+                      {banks.map(bank => (
+                        <option key={bank.id} value={bank.id}>{bank.name}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <div className="flex items-start gap-3">
+                      <Lock className="text-amber-600 mt-1" size={20} />
+                      <p className="text-sm text-gray-600">
+                        You'll be redirected to your bank's secure login page to complete the connection.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end gap-4 pt-4">
+                    <button
+                      type="button"
+                      onClick={() => setShowLinkAccount(false)}
+                      className="px-4 py-2 text-gray-600 hover:text-gray-800"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 flex items-center gap-2"
+                    >
+                      <Link size={20} />
+                      Connect Account
+                    </button>
+                  </div>
+                </form>
               </div>
             </div>
           )}
