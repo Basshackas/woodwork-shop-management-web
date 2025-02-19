@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
-import { DollarSign, TrendingUp, CreditCard, Users, Calendar, Clock, Package, AlertTriangle, BarChart2, ArrowUpRight, ArrowDownRight, FileText, CheckSquare, UserPlus } from 'lucide-react';
+import { DollarSign, TrendingUp, CreditCard, Users, Calendar, Clock, Package, AlertTriangle, BarChart2, ArrowUpRight, ArrowDownRight, FileText, CheckSquare, UserPlus, PenTool as Tool, Truck, ShoppingBag, Boxes, Clipboard, Hammer, Warehouse, Activity, PieChart } from 'lucide-react';
 import { StatCard } from './ui/StatCard';
 import { SalesChart } from './charts/SalesChart';
 import { ExpenseChart } from './charts/ExpenseChart';
 import { RecentTransactions } from './dashboard/RecentTransactions';
-import { TopEmployees } from './dashboard/TopEmployees';
 import { projects } from '../data/projects';
 import { employees } from '../data/employees';
 import { sales } from '../data/sales';
@@ -12,6 +11,7 @@ import { expenses } from '../data/expenses';
 
 export default function Dashboard() {
   const [timeRange, setTimeRange] = useState<'week' | 'month' | 'year'>('month');
+  const [selectedMetric, setSelectedMetric] = useState<'revenue' | 'projects' | 'inventory'>('revenue');
 
   // Calculate key metrics
   const totalRevenue = sales.reduce((sum, sale) => sum + sale.totalAmount, 0);
@@ -40,6 +40,41 @@ export default function Dashboard() {
     };
   }, { overdue: 0, atRisk: 0, onTrack: 0 });
 
+  // Calculate monthly trends
+  const monthlyData = {
+    revenue: [42000, 38000, 45000, 48000, 52000, 49000],
+    expenses: [31000, 28000, 32000, 35000, 38000, 36000],
+    projects: [4, 3, 5, 6, 5, 4]
+  };
+
+  // Mock inventory metrics
+  const inventoryMetrics = {
+    totalItems: 1250,
+    lowStock: 45,
+    outOfStock: 12,
+    totalValue: 85000,
+    reorderNeeded: 28,
+    incomingDeliveries: 5,
+    topCategories: [
+      { name: 'Hardwood', value: 35 },
+      { name: 'Tools', value: 25 },
+      { name: 'Hardware', value: 20 },
+      { name: 'Finishes', value: 15 },
+      { name: 'Other', value: 5 }
+    ]
+  };
+
+  // Mock production metrics
+  const productionMetrics = {
+    activeWorkstations: 8,
+    totalWorkstations: 10,
+    utilizationRate: 80,
+    avgCompletionTime: 4.5,
+    qualityScore: 95,
+    wastageRate: 3.2,
+    maintenanceNeeded: 2
+  };
+
   return (
     <div className="space-y-6">
       {/* Quick Actions */}
@@ -57,7 +92,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Financial Overview */}
+      {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <StatCard
           icon={<DollarSign className="w-8 h-8 text-green-600" />}
@@ -85,15 +120,113 @@ export default function Dashboard() {
         />
       </div>
 
-      {/* Project & Team Metrics */}
+      {/* Production Overview */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-white rounded-lg shadow-md p-6">
-          <h3 className="text-lg font-semibold mb-4">Project Health</h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold">Production Status</h3>
+            <Tool className="w-6 h-6 text-gray-400" />
+          </div>
           <div className="space-y-4">
             <div>
               <div className="flex justify-between text-sm mb-1">
-                <span>On Track</span>
-                <span className="text-green-600">{projectHealth.onTrack}</span>
+                <span>Workstation Utilization</span>
+                <span className="text-blue-600">{productionMetrics.utilizationRate}%</span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div
+                  className="bg-blue-500 h-2 rounded-full"
+                  style={{ width: `${productionMetrics.utilizationRate}%` }}
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-gray-50 p-3 rounded-lg">
+                <p className="text-sm text-gray-600">Active Stations</p>
+                <p className="text-xl font-bold">{productionMetrics.activeWorkstations}/{productionMetrics.totalWorkstations}</p>
+              </div>
+              <div className="bg-gray-50 p-3 rounded-lg">
+                <p className="text-sm text-gray-600">Avg. Completion</p>
+                <p className="text-xl font-bold">{productionMetrics.avgCompletionTime} days</p>
+              </div>
+            </div>
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-gray-600">Quality Score</span>
+              <span className="text-green-600 font-medium">{productionMetrics.qualityScore}%</span>
+            </div>
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-gray-600">Wastage Rate</span>
+              <span className="text-amber-600 font-medium">{productionMetrics.wastageRate}%</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold">Inventory Overview</h3>
+            <Warehouse className="w-6 h-6 text-gray-400" />
+          </div>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-gray-50 p-3 rounded-lg">
+                <p className="text-sm text-gray-600">Total Items</p>
+                <p className="text-xl font-bold">{inventoryMetrics.totalItems}</p>
+              </div>
+              <div className="bg-gray-50 p-3 rounded-lg">
+                <p className="text-sm text-gray-600">Total Value</p>
+                <p className="text-xl font-bold">${inventoryMetrics.totalValue.toLocaleString()}</p>
+              </div>
+            </div>
+            <div>
+              <div className="flex justify-between text-sm mb-2">
+                <span className="text-gray-600">Stock Status</span>
+                <span className="text-amber-600 font-medium">
+                  {inventoryMetrics.lowStock} low stock
+                </span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <div className="flex-1 bg-gray-200 rounded-full h-2">
+                  <div
+                    className="bg-green-500 h-2 rounded-full"
+                    style={{ width: '70%' }}
+                  />
+                </div>
+                <span className="text-gray-600">70% optimal</span>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">Reorder Needed</span>
+                <span className="text-red-600 font-medium">{inventoryMetrics.reorderNeeded} items</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">Incoming Deliveries</span>
+                <span className="text-green-600 font-medium">{inventoryMetrics.incomingDeliveries}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold">Project Metrics</h3>
+            <Clipboard className="w-6 h-6 text-gray-400" />
+          </div>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-gray-50 p-3 rounded-lg">
+                <p className="text-sm text-gray-600">Active Projects</p>
+                <p className="text-xl font-bold">{activeProjects}</p>
+              </div>
+              <div className="bg-gray-50 p-3 rounded-lg">
+                <p className="text-sm text-gray-600">Completion Rate</p>
+                <p className="text-xl font-bold">{projectCompletionRate.toFixed(1)}%</p>
+              </div>
+            </div>
+            <div>
+              <div className="flex justify-between text-sm mb-1">
+                <span>Project Health</span>
+                <span className="text-green-600">{projectHealth.onTrack} on track</span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
                 <div
@@ -102,87 +235,15 @@ export default function Dashboard() {
                 />
               </div>
             </div>
-            <div>
-              <div className="flex justify-between text-sm mb-1">
-                <span>At Risk</span>
-                <span className="text-yellow-600">{projectHealth.atRisk}</span>
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">At Risk</span>
+                <span className="text-amber-600 font-medium">{projectHealth.atRisk} projects</span>
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div
-                  className="bg-yellow-500 h-2 rounded-full"
-                  style={{ width: `${(projectHealth.atRisk / projects.length) * 100}%` }}
-                />
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">Overdue</span>
+                <span className="text-red-600 font-medium">{projectHealth.overdue} projects</span>
               </div>
-            </div>
-            <div>
-              <div className="flex justify-between text-sm mb-1">
-                <span>Overdue</span>
-                <span className="text-red-600">{projectHealth.overdue}</span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div
-                  className="bg-red-500 h-2 rounded-full"
-                  style={{ width: `${(projectHealth.overdue / projects.length) * 100}%` }}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h3 className="text-lg font-semibold mb-4">Team Performance</h3>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Active Employees</p>
-                <p className="text-2xl font-bold">{activeEmployees}</p>
-              </div>
-              <Users className="w-8 h-8 text-blue-600" />
-            </div>
-            <div>
-              <div className="flex justify-between text-sm mb-1">
-                <span>Team Utilization</span>
-                <span>{utilization.toFixed(1)}%</span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div
-                  className="bg-blue-500 h-2 rounded-full"
-                  style={{ width: `${utilization}%` }}
-                />
-              </div>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span>Projects per Employee</span>
-              <span>{(activeProjects / activeEmployees).toFixed(1)}</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h3 className="text-lg font-semibold mb-4">Project Metrics</h3>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Active Projects</p>
-                <p className="text-2xl font-bold">{activeProjects}</p>
-              </div>
-              <Package className="w-8 h-8 text-amber-600" />
-            </div>
-            <div>
-              <div className="flex justify-between text-sm mb-1">
-                <span>Completion Rate</span>
-                <span>{projectCompletionRate.toFixed(1)}%</span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div
-                  className="bg-amber-500 h-2 rounded-full"
-                  style={{ width: `${projectCompletionRate}%` }}
-                />
-              </div>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span>Avg. Project Duration</span>
-              <span>45 days</span>
             </div>
           </div>
         </div>
@@ -260,6 +321,76 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {/* Inventory Distribution */}
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <h2 className="text-lg font-semibold mb-4">Inventory Distribution</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-4">
+            {inventoryMetrics.topCategories.map(category => (
+              <div key={category.name} className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className={`w-3 h-3 rounded-full ${
+                    category.name === 'Hardwood' ? 'bg-blue-500' :
+                    category.name === 'Tools' ? 'bg-green-500' :
+                    category.name === 'Hardware' ? 'bg-yellow-500' :
+                    category.name === 'Finishes' ? 'bg-purple-500' :
+                    'bg-gray-500'
+                  }`} />
+                  <span>{category.name}</span>
+                </div>
+                <div className="flex items-center gap-4">
+                  <span className="text-gray-600">{category.value}%</span>
+                  <div className="w-24 bg-gray-200 rounded-full h-2">
+                    <div
+                      className={`h-2 rounded-full ${
+                        category.name === 'Hardwood' ? 'bg-blue-500' :
+                        category.name === 'Tools' ? 'bg-green-500' :
+                        category.name === 'Hardware' ? 'bg-yellow-500' :
+                        category.name === 'Finishes' ? 'bg-purple-500' :
+                        'bg-gray-500'
+                      }`}
+                      style={{ width: `${category.value}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="space-y-4">
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <h3 className="font-medium mb-2">Stock Alerts</h3>
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span>Low Stock Items</span>
+                  <span className="text-amber-600 font-medium">{inventoryMetrics.lowStock}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span>Out of Stock</span>
+                  <span className="text-red-600 font-medium">{inventoryMetrics.outOfStock}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span>Reorder Needed</span>
+                  <span className="text-blue-600 font-medium">{inventoryMetrics.reorderNeeded}</span>
+                </div>
+              </div>
+            </div>
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <h3 className="font-medium mb-2">Incoming Deliveries</h3>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Truck className="w-4 h-4 text-gray-400" />
+                  <span className="text-sm">{inventoryMetrics.incomingDeliveries} deliveries scheduled</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-gray-400" />
+                  <span className="text-sm">Next delivery: Tomorrow</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Recent Activity & Alerts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white rounded-lg shadow-md p-6">
@@ -297,32 +428,34 @@ export default function Dashboard() {
                 </div>
               </div>
             )}
-            {projectHealth.atRisk > 0 && (
+            {inventoryMetrics.lowStock > 0 && (
               <div className="flex items-start gap-3 bg-yellow-50 p-4 rounded-lg">
-                <AlertTriangle className="w-6 h-6 text-yellow-600 mt-1" />
+                <Boxes className="w-6 h-6 text-yellow-600 mt-1" />
                 <div>
-                  <p className="font-medium text-yellow-800">At-Risk Projects</p>
+                  <p className="font-medium text-yellow-800">Low Stock Alert</p>
                   <p className="text-sm text-yellow-600">
-                    {projectHealth.atRisk} {projectHealth.atRisk === 1 ? 'project' : 'projects'} need attention
+                    {inventoryMetrics.lowStock} items are running low
                   </p>
                 </div>
               </div>
             )}
-            <div className="flex items-start gap-3 bg-blue-50 p-4 rounded-lg">
-              <Clock className="w-6 h-6 text-blue-600 mt-1" />
-              <div>
-                <p className="font-medium text-blue-800">Upcoming Deadlines</p>
-                <p className="text-sm text-blue-600">
-                  3 projects due this week
-                </p>
+            {productionMetrics.maintenanceNeeded > 0 && (
+              <div className="flex items-start gap-3 bg-blue-50 p-4 rounded-lg">
+                <Tool className="w-6 h-6 text-blue-600 mt-1" />
+                <div>
+                  <p className="font-medium text-blue-800">Maintenance Required</p>
+                  <p className="text-sm text-blue-600">
+                    {productionMetrics.maintenanceNeeded} machines need maintenance
+                  </p>
+                </div>
               </div>
-            </div>
+            )}
             <div className="flex items-start gap-3 bg-green-50 p-4 rounded-lg">
               <CheckSquare className="w-6 h-6 text-green-600 mt-1" />
               <div>
-                <p className="font-medium text-green-800">Recent Completions</p>
+                <p className="font-medium text-green-800">Quality Check</p>
                 <p className="text-sm text-green-600">
-                  2 projects completed this week
+                  All quality metrics are within acceptable ranges
                 </p>
               </div>
             </div>
@@ -330,10 +463,9 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Recent Transactions & Top Employees */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Recent Transactions */}
+      <div className="bg-white rounded-lg shadow-md p-6">
         <RecentTransactions />
-        <TopEmployees />
       </div>
     </div>
   );
