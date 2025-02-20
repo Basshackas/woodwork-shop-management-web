@@ -50,6 +50,7 @@ import {
   Percent,
   CreditCard,
   Building2,
+  CheckSquare,
   ChevronRight,
   ChevronDown,
   ChevronUp,
@@ -1176,3 +1177,5 @@ export function AnalyticsPage() {
     </div>
   );
 }
+
+
