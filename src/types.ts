@@ -315,6 +315,49 @@ export interface Client {
   contacts: ClientContact[];
   documents: Attachment[];
   interactions: ClientInteraction[];
+  paymentHistory: PaymentRecord[];
+  invoices: Invoice[];
+  balance: number;
+  totalBilled: number;
+  totalPaid: number;
+}
+
+export interface PaymentRecord {
+  id: string;
+  date: string;
+  amount: number;
+  method: 'cash' | 'check' | 'credit_card' | 'bank_transfer' | 'other';
+  status: 'pending' | 'completed' | 'failed' | 'refunded';
+  reference: string;
+  invoiceId: string;
+  notes?: string;
+}
+
+export interface Invoice {
+  id: string;
+  number: string;
+  date: string;
+  dueDate: string;
+  items: InvoiceItem[];
+  subtotal: number;
+  tax: number;
+  total: number;
+  amountPaid: number;
+  balance: number;
+  status: 'draft' | 'sent' | 'paid' | 'overdue' | 'void';
+  terms?: string;
+  notes?: string;
+  attachments?: Attachment[];
+}
+
+export interface InvoiceItem {
+  id: string;
+  description: string;
+  quantity: number;
+  unitPrice: number;
+  tax: number;
+  total: number;
+  projectId?: string;
 }
 
 export interface ClientContact {
